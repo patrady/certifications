@@ -116,6 +116,150 @@ _Note_: The URIs contain your account number, so they will already be unique
 
 _Note_: Fargate makes it much easier to run containers in ECS
 
+## Coordinating Services with Simple Workflow in AWS
 
+### Understanding Simple Workflow
 
-I GOT BORED OF THIS COURSE AND DIDN'T FINISH IT - COME BACK HERE
+Simple Workflow acts as an intermediary coordinator to disparate services and applications. It exposes an interface to connect to.
+
+** The videos are horrible for this section - so watch a different tutorial
+
+## Securing Infrastructure in AWS
+
+### The Power of VPC
+
+![Layered Security](./images/layered-security.png)
+
+If you end up skipping one of these layers, you could be out of a job
+
+VPCs are ubiquitous across enterprices
+
+![VPC and VPN](./images/vpc-and-vpn.png)
+
+**Hybrid Cloud**: Architecture design where a cloud and on-premises resources interact over a VPN connection. This makes sure connections never go over the internet
+
+This example shows an EC2 instance in AWs connecting to an on-prem DB over a VPN connection
+
+![VPC and VPN Example](./images/vpc-and-vpn-example.png)
+
+There are advantages to using a VPN instead of connecting over the internet for AWS vs on-prem resources
+    1. Faster connection speeds (because there won't be intermediary hops)
+    2. No API Layer to build
+    3. More secure behind the company firewall
+
+**VPC Peering**: Sets up up a connection between two VPCs and allows resources to talk to each other using their _private_ IP addresses.
+
+_NOTE_: You can even do this across different AWS accounts
+
+This shows VPC peering within one account
+
+![VPC Peering Within Account](./images/vpc-peering-1.png)
+
+This shows VPC peering across accounts
+
+![VPC Peering Across Accounts](./images/vpc-peering-2.png)
+
+### Ingress/Egress Filtering
+
+**Ingress**: Incoming Traffic
+**Egress**: Outgoing Traffic
+
+**Network Access Control List**: Filters traffic between subnets by IP Address and port. It's like a big security group for a subnet.
+
+- A VPC has a Network ACL which the subnet inherits but a subnet can have additional ones that the VPC doesn't. 
+
+- Network ACL rules trump security group rules
+
+- Network ACL **ONLY** filters traffic going into a subnet (that's why it takes precedence because it comes first). Once the traffic is already in the subnet, the Network ACL no longer applies. But, traffic between different subnets does go through the Network ACL
+
+- They are completely stateless, every packet is checked
+
+- Each rule in a Network ACL has a 'Rule Number' which chronologically ranks each rule
+
+- Egress rules are great for preventing a hacker that got in from sending a lot of info out to unauthorized ip addresses
+
+![Network ACL Structure](./images/network-acl-structure.png)
+
+![VPC Bones](./images/bones-of-vpc.png)
+
+### Configuring a VPC
+
+**Ephemeral Ports**: Ports on clients used to connect to servers
+    - Example: Port 1786 on the client to connect to port 80 on the server
+    - For web apps, clients have Ports 1024-65535 whitelisted as ephemeral ports
+
+### Using VPC Flow Logs
+
+**VPC Flow Logs**: Logs packets coming through VPC Subnets. Aggregates packets according to a capture window.
+
+![VPC Flow Log Structure](./images/vpc-flow-log-structure.png)
+
+### Using CloudTrail
+
+CloudTrail records API activity in the user's AWS account.
+
+CloudWatch vs CloudTrail: CloudWatch monitors services and applications whereas CloudTrail is used to monitor configuration changes for compliance
+
+- Monitor management and data events
+- Can be configured to export logs to an S3 bucket
+- These can be consumed by a log analysis tool (like Splunk)
+
+### Encrypting Data at Rest in AWS
+
+To encrypt data in transit, use HTTPS to encrypt with SSL or encrypt data before transit.
+
+When encrpyting data, it uses the encrpytion keys in the AWS Key Management Service (KMS). You can encrypt data with different keys, making it more secure.
+
+Each KMS Customer Managed Key is $1 / month
+Encrypt/Decrypt Request: $0.03/10,000 calls (first 20k requests are free)
+
+_Note_: With databases (RDS and DynamoDB), this is fairly cheap because they will store the key in memory but S3 DOES NOT AND CAN COST YOU SOME MONEY
+
+## Managing Access to AWS
+
+### The IAM Security Model
+
+**IAM Authentication**: Determines if a user is who they say they are
+
+Multiple methods to authenticate:
+    1. Password: This is actually optional and is only required to login into the console
+        - Password Complexity, Length, and Expiration are configurable
+        - Enable MFA
+    2. Access Keys: This enables access through the CLI or SDK
+        - Consists of a Key that is shareable and a private key that is only visible on creation
+        - These should be rotated periodically
+
+**IAM Authorization**: Determines what hte user can and can't do
+**Policy**: A rule that either allows or denies an action on a resource
+    - They can be super broad or very specific
+    - Always follow the policy of least privilege
+    - NOTE: There are already _hundreds_ of defined policies in AWS but you can create custom ones that contain other policies
+    - NOTE: There are (+) signs next to policies that are a group of other policies and orange AWS boxes next to individual policies
+
+### Users, Groups, and Roles
+**IAM User**: Person or service that needs access to AWS
+    - Policies can be attached to a user but this is NOT a best practice
+    - Best practice is to attach policies to groups
+    - Ryan suggests that this can be overkill for small orgs. His recommendation is for:
+        - 1-5  Users: Attach policies to users
+        - 6-20 Users: Assign users to groups
+        - 20+  Users: Use SAML or OpenID
+
+**IAM Group**: Contains users and policies to cleanly assign permissions to users.
+    - There's a Many-to-Many relationship between users and groups
+
+**IAM Role**: Entities that have attached policies. Resources can assume a role to obtain the permissions from the policies.
+    - They don't have a traditional relationship with authentication methods
+
+### Cognito
+
+IAM is for developers and internal teams to manage access within AWS.
+But what about your actual end users that need to authenticate to your application? Use Cognito!
+
+This handles user authentication, authorization, and user management.
+
+Authentication has built-in support for username/password, 3rd-parties like Amazon, Google, and Facebook, and MFA.
+
+User authorization defines policies for resources/service management for each user as they sign up.
+
+User Management lets new users sign up, reset passwords, and even can help you search users on the backend.

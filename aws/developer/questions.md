@@ -1,0 +1,3 @@
+1. Do we have CloudFormation templates for our apps? If so, can we have a link?
+2. [AWS recommends](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/aws-account-management-and-separation.html) putting workloads in different accounts. Like production workloads should be in a different account than QA/Test workloads because accounts are a hard separation. Do we do this?
+3. What's the difference between AWS Organizations and Control Tower?
